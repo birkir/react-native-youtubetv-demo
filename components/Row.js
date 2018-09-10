@@ -1,50 +1,237 @@
 import * as React from 'react';
 import PropTypes from 'prop-types';
-import { Text, View, StyleSheet, Image } from 'react-native';
-
-const ROW_HEIGHT = 80;
+import {
+  Text,
+  View,
+  StyleSheet,
+  Animated,
+  Image,
+  TouchableOpacity,
+} from 'react-native';
+import { PREVIEW_HEIGHT, ROW_HEIGHT } from '../utils/constants';
 
 export default class Row extends React.PureComponent {
-
   static propTypes = {
+    scrollY: PropTypes.any,
+    scrollTo: PropTypes.func,
+    index: PropTypes.number,
     title: PropTypes.string.isRequired,
     subtitle: PropTypes.string,
     backgroundImageUrl: PropTypes.string.isRequired,
     progress: PropTypes.number,
   };
 
+  inputRange = [
+    ROW_HEIGHT * (this.props.index - 1),
+    ROW_HEIGHT * this.props.index,
+  ];
+
+  onPress = () => {
+    return this.props.scrollTo(this.props.index * ROW_HEIGHT);
+  };
+
+  renderRow = () => {
+    return (
+      <Animated.View
+        style={[
+          styles.row,
+          {
+            transform: [
+              {
+                translateY: this.props.scrollY.interpolate({
+                  inputRange: this.inputRange,
+                  outputRange: [0, ROW_HEIGHT],
+                  extrapolate: 'clamp',
+                }),
+              },
+            ],
+          },
+        ]}>
+        <TouchableOpacity
+          onPress={this.onPress}
+          style={StyleSheet.absoluteFill}>
+          <Animated.View
+            style={[
+              styles.row__inner,
+              {
+                transform: [
+                  {
+                    translateY: this.props.scrollY.interpolate({
+                      inputRange: this.inputRange,
+                      outputRange: [0, -ROW_HEIGHT],
+                      extrapolate: 'clamp',
+                    }),
+                  },
+                ],
+              },
+            ]}>
+            <Text style={styles.row__title}>{this.props.title}</Text>
+          </Animated.View>
+        </TouchableOpacity>
+      </Animated.View>
+    );
+  };
+
+  renderPreview = () => {
+    return (
+      <Animated.View
+        style={[
+          styles.preview,
+          {
+            transform: [
+              {
+                translateY: this.props.scrollY.interpolate({
+                  inputRange: this.inputRange,
+                  outputRange: [0, -PREVIEW_HEIGHT + ROW_HEIGHT],
+                  extrapolate: 'clamp',
+                }),
+              },
+            ],
+          },
+        ]}>
+        <Animated.Image
+          source={{ uri: this.props.backgroundImageUrl }}
+          resizeMode="cover"
+          style={[
+            StyleSheet.absoluteFill,
+            {
+              transform: [
+                {
+                  translateY: this.props.scrollY.interpolate({
+                    inputRange: this.inputRange,
+                    outputRange: [-PREVIEW_HEIGHT / 2, 0],
+                    extrapolate: 'clamp',
+                  }),
+                },
+              ],
+            },
+          ]}
+        />
+        <Animated.View
+          style={[
+            styles.preview__overlay,
+            {
+              opacity: this.props.scrollY.interpolate({
+                inputRange: this.inputRange,
+                outputRange: [0, 0.4],
+                extrapolate: 'clamp',
+              }),
+            },
+          ]}
+        />
+        <Animated.Text
+          style={[
+            styles.preview__title,
+            {
+              transform: [
+                {
+                  translateY: this.props.scrollY.interpolate({
+                    inputRange: this.inputRange,
+                    outputRange: [-ROW_HEIGHT * 1.5, 0],
+                    extrapolate: 'clamp',
+                  }),
+                },
+              ],
+            },
+          ]}>
+          {this.props.title}
+        </Animated.Text>
+        <Animated.View
+          style={[
+            styles.progress,
+            {
+              width: `${Math.floor(this.props.progress * 100)}%`,
+            },
+          ]}
+        />
+      </Animated.View>
+    );
+  };
+
   render() {
-    const {
-      title,
-      subtitle,
-      backgroundImageUrl,
-      progress,
-    } = this.props;
+    const { title, subtitle, backgroundImageUrl, progress } = this.props;
 
     return (
-      <View style={styles.row}>
-        <Text style={styles.row__text}>{title}</Text>
-        <View style={styles.row__border} />
+      <View style={styles.host}>
+        {this.renderPreview()}
+        {this.renderRow()}
+        <View style={styles.border} />
       </View>
     );
   }
 }
 
 const styles = StyleSheet.create({
-  row: {
+  host: {
     height: ROW_HEIGHT,
     justifyContent: 'center',
     padding: 16,
     backgroundColor: '#ffffff',
   },
 
-  row__text: {
+  row: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: '#ffffff',
+    overflow: 'hidden',
+  },
+
+  row__inner: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    padding: 12,
+    justifyContent: 'center',
+  },
+
+  preview: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: PREVIEW_HEIGHT,
+
+    overflow: 'hidden',
+    padding: 16,
+
+    justifyContent: 'flex-end',
+  },
+
+  preview__overlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: '#000000',
+  },
+
+  preview__title: {
+    fontFamily: 'AvenirNextCondensed-Bold',
+    fontSize: 30,
+    color: '#ffffff',
+  },
+
+  progress: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    height: 3,
+    backgroundColor: 'red',
+  },
+
+  row__title: {
     fontFamily: 'AvenirNextCondensed-Bold',
     fontSize: 20,
     color: 'black',
   },
 
-  row__border: {
+  border: {
     position: 'absolute',
     bottom: 0,
     left: 0,
