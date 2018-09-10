@@ -8,13 +8,12 @@ import {
   Image,
   TouchableOpacity,
 } from 'react-native';
-
-const ROW_HEIGHT = 80;
-const PREVIEW_HEIGHT = 200;
+import { PREVIEW_HEIGHT, ROW_HEIGHT } from '../utils/constants';
 
 export default class Row extends React.PureComponent {
   static propTypes = {
     scrollY: PropTypes.any,
+    scrollTo: PropTypes.func,
     index: PropTypes.number,
     title: PropTypes.string.isRequired,
     subtitle: PropTypes.string,
@@ -26,6 +25,10 @@ export default class Row extends React.PureComponent {
     ROW_HEIGHT * (this.props.index - 1),
     ROW_HEIGHT * this.props.index,
   ];
+
+  onPress = () => {
+    return this.props.scrollTo(this.props.index * ROW_HEIGHT);
+  };
 
   renderRow = () => {
     return (
@@ -44,7 +47,9 @@ export default class Row extends React.PureComponent {
             ],
           },
         ]}>
-        <TouchableOpacity style={StyleSheet.absoluteFill}>
+        <TouchableOpacity
+          onPress={this.onPress}
+          style={StyleSheet.absoluteFill}>
           <Animated.View
             style={[
               styles.row__inner,
@@ -94,7 +99,7 @@ export default class Row extends React.PureComponent {
                 {
                   translateY: this.props.scrollY.interpolate({
                     inputRange: this.inputRange,
-                    outputRange: [-ROW_HEIGHT + 20, 0],
+                    outputRange: [-PREVIEW_HEIGHT / 2, 0],
                     extrapolate: 'clamp',
                   }),
                 },
@@ -122,7 +127,7 @@ export default class Row extends React.PureComponent {
                 {
                   translateY: this.props.scrollY.interpolate({
                     inputRange: this.inputRange,
-                    outputRange: [-ROW_HEIGHT + 20, 0],
+                    outputRange: [-ROW_HEIGHT * 1.5, 0],
                     extrapolate: 'clamp',
                   }),
                 },
@@ -131,6 +136,14 @@ export default class Row extends React.PureComponent {
           ]}>
           {this.props.title}
         </Animated.Text>
+        <Animated.View
+          style={[
+            styles.progress,
+            {
+              width: `${Math.floor(this.props.progress * 100)}%`,
+            },
+          ]}
+        />
       </Animated.View>
     );
   };
@@ -202,6 +215,14 @@ const styles = StyleSheet.create({
     fontFamily: 'AvenirNextCondensed-Bold',
     fontSize: 30,
     color: '#ffffff',
+  },
+
+  progress: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    height: 3,
+    backgroundColor: 'red',
   },
 
   row__title: {

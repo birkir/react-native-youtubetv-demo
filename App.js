@@ -3,18 +3,37 @@ import { Text, View, ScrollView, Animated, StyleSheet } from 'react-native';
 import { createStackNavigator } from 'react-navigation';
 import { Constants } from 'expo';
 import Row from './components/Row';
+import Bottom from './components/Bottom';
 import items from './assets/items.json';
-
-const ROW_HEIGHT = 80;
-const PREVIEW_HEIGHT = 200;
+import { PREVIEW_HEIGHT, ROW_HEIGHT } from './utils/constants';
 
 class App extends React.Component {
   scrollRef = React.createRef();
   scrollY = new Animated.Value(0);
 
+  state = {
+    height: 0,
+  };
+
+  scrollTo = y => {
+    this.scrollRef.current._component.scrollTo({ y, animated: true });
+  };
+
   renderRow = (item, index) => (
-    <Row key={item.id} index={index} scrollY={this.scrollY} {...item} />
+    <Row
+      key={item.id}
+      index={index}
+      scrollTo={this.scrollTo}
+      scrollY={this.scrollY}
+      {...item}
+    />
   );
+
+  onLayout = e => {
+    this.setState({
+      height: e.nativeEvent.layout.height,
+    });
+  };
 
   render() {
     return (
@@ -36,6 +55,7 @@ class App extends React.Component {
         decelerationRate="fast"
         scrollEventThrottle={16}>
         {items.map(this.renderRow)}
+        <Bottom scrollTo={this.scrollTo} height={this.state.height} />
       </Animated.ScrollView>
     );
   }
